@@ -103,7 +103,7 @@ const seenTradeIds = new Set();
 export default async function handler(req, res) {
   const MIN_SIZE     = parseInt(process.env.MIN_SIZE      || "1000");
   const MIN_WIN_RATE = parseFloat(process.env.MIN_WIN_RATE || "0.65");
-  const MIN_TRADES   = parseInt(process.env.MIN_TRADES    || "10");
+  const MIN_TRADES   = parseInt(process.env.MIN_TRADES    || "5");
   try {
     const markets = await fetchSportsMarkets();
     const fired = [];
