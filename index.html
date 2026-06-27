@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PolyWhale</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#080C14;color:#E8EDF5;font-family:'Inter',sans-serif;min-height:100vh}
+    header{background:#111927;border-bottom:1px solid #1A2535;padding:0 16px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .logo{font-family:'Roboto Mono',monospace;font-weight:700;font-size:15px;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+    .dot{width:8px;height:8px;border-radius:50%;background:#00C48C;box-shadow:0 0 6px #00C48C;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .badge{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:3px;background:#00C48C18;border:1px solid #00C48C44;color:#00C48C}
+    main{max-width:680px;margin:0 auto;padding:16px 12px 60px}
+    .config{background:#0D1420;border:1px solid #1A2535;border-radius:8px;padding:14px 16px;margin-bottom:16px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .config label{font-family:'Roboto Mono',monospace;font-size:9px;color:#5A6A82;letter-spacing:.1em;display:block;margin-bottom:4px}
+    .config .val{font-family:'Roboto Mono',monospace;font-size:14px;font-weight:700;color:#00D4FF}
+    .section-label{font-family:'Roboto Mono',monospace;font-size:10px;color:#5A6A82;letter-spacing:.12em;margin-bottom:8px;margin-top:4px}
+    .scan-btn{background:#00C48C18;border:1px solid #00C48C44;border-radius:6px;color:#00C48C;font-family:'Roboto Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.06em;padding:7px 14px;cursor:pointer}
+    .scan-btn:disabled{opacity:.4;cursor:not-allowed}
+    .empty{text-align:center;padding:60px 20px;color:#5A6A82}
+    .empty .icon{font-size:40px;opacity:.2;margin-bottom:12px}
+    .empty p{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.1em}
+    .empty small{font-size:12px;margin-top:8px;display:block}
+    .card{background:#0D1420;border:1px solid #1A2535;border-radius:8px;padding:14px;margin-bottom:10px;animation:fadeIn .3s ease}
+    .card.sharp{border-color:#00C48C33;background:#00C48C08}
+    .card.watch{border-color:#F5A62333;background:#F5A62308}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+    .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .grade{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;border-radius:3px}
+    .grade.sharp{color:#00C48C;background:#00C48C18;border:1px solid #00C48C44}
+    .grade.watch{color:#F5A623;background:#F5A62318;border:1px solid #F5A62344}
+    .market{font-size:13px;font-weight:600;margin-bottom:10px;line-height:1.4}
+    .stats{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+    .stat label{font-family:'Roboto Mono',monospace;font-size:9px;color:#5A6A82;letter-spacing:.1em;display:block;margin-bottom:2px}
+    .stat .v{font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700}
+    .yes{color:#00C48C}.no{color:#FF4757}.amber{color:#F5A623}.muted{color:#5A6A82}
+    .links{display:flex;gap:12px;padding-top:10px;border-top:1px solid #1A2535}
+    .links a{font-family:'Roboto Mono',monospace;font-size:10px;color:#00D4FF;text-decoration:none;letter-spacing:.04em}
+    .links a:hover{text-decoration:underline}
+    .time{font-family:'Roboto Mono',monospace;font-size:10px;color:#5A6A82}
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="dot"></div>
+    POLYWHALE
+    <span style="font-size:10px;color:#5A6A82;font-weight:400">SHARP TRACKER</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="badge" id="statusBadge">LIVE</span>
+    <button class="scan-btn" id="scanBtn" onclick="scan()">▶ SCAN NOW</button>
+  </div>
+</header>
+
+<main>
+  <div class="config">
+    <div>
+      <label>MIN SIZE</label>
+      <div class="val">$1,000</div>
+    </div>
+    <div>
+      <label>MIN WIN RATE</label>
+      <div class="val">65%</div>
+    </div>
+    <div>
+      <label>ALERTS TO</label>
+      <div class="val" style="font-size:11px">Discord 🐋</div>
+    </div>
+  </div>
+
+  <div class="section-label">ALERT FEED</div>
+  <div id="feed">
+    <div class="empty">
+      <div class="icon">◎</div>
+      <p>NO ALERTS YET</p>
+      <small>Scanner runs every 5 min · Discord alerts fire automatically<br>Hit SCAN NOW to trigger immediately</small>
+    </div>
+  </div>
+</main>
+
+<script>
+const alerts = [];
+
+async function scan() {
+  const btn = document.getElementById("scanBtn");
+  const badge = document.getElementById("statusBadge");
+  btn.disabled = true;
+  btn.textContent = "SCANNING…";
+  badge.textContent = "SCANNING";
+  badge.style.background = "#F5A62318";
+  badge.style.borderColor = "#F5A62344";
+  badge.style.color = "#F5A623";
+
+  try {
+    const r = await fetch("/api/scan");
+    const data = await r.json();
+
+    if (data.alerts && data.alerts.length > 0) {
+      data.alerts.forEach(a => {
+        alerts.unshift({ ...a, ts: new Date() });
+      });
+      render();
+    }
+
+    const count = data.alertsFired || 0;
+    badge.textContent = count > 0 ? `${count} ALERT${count>1?"S":""}` : "SCANNED · 0";
+    badge.style.background = count > 0 ? "#00C48C18" : "#F5A62318";
+    badge.style.borderColor = count > 0 ? "#00C48C44" : "#F5A62344";
+    badge.style.color = count > 0 ? "#00C48C" : "#F5A623";
+  } catch(e) {
+    badge.textContent = "ERROR";
+    badge.style.color = "#FF4757";
+  }
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = "▶ SCAN NOW";
+    badge.textContent = "LIVE";
+    badge.style.background = "#00C48C18";
+    badge.style.borderColor = "#00C48C44";
+    badge.style.color = "#00C48C";
+  }, 10000);
+}
+
+function render() {
+  if (!alerts.length) return;
+  const feed = document.getElementById("feed");
+  feed.innerHTML = alerts.slice(0, 50).map(a => {
+    const isSharp = (a.grade||"").includes("SHARP");
+    const cls = isSharp ? "sharp" : "watch";
+    const gradeCls = isSharp ? "sharp" : "watch";
+    const gradeLabel = isSharp ? "🔥 SHARP" : "👀 WATCH";
+    const ts = a.ts ? a.ts.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "";
+    return `
+      <div class="card ${cls}">
+        <div class="card-top">
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-family:'Roboto Mono',monospace;font-size:11px;color:#00D4FF;font-weight:600">${a.wallet||"Unknown"}</span>
+            <span class="grade ${gradeCls}">${gradeLabel}</span>
+          </div>
+          <span class="time">${ts}</span>
+        </div>
+        <div class="market">${a.market||"—"}</div>
+        <div class="stats">
+          <div class="stat"><label>WIN RATE</label><div class="v ${isSharp?"yes":"amber"}">${a.winRate||"—"}</div></div>
+          <div class="stat"><label>SIZE</label><div class="v ${parseInt((a.size||"0").replace(/\D/g,""))>=5000?"amber":""}">${a.size||"—"}</div></div>
+          <div class="stat"><label>DISCORD</label><div class="v ${a.sent?"yes":"no"}">${a.sent?"✓ SENT":"✗ FAILED"}</div></div>
+        </div>
+        <div class="links">
+          <span style="font-family:'Roboto Mono',monospace;font-size:10px;color:#5A6A82">RESEARCH →</span>
+          <a href="https://polymarket.com" target="_blank">Market ↗</a>
+          <a href="https://polymarket.com" target="_blank">Wallet ↗</a>
+        </div>
+      </div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "polywhale",
+  "version": "1.0.0",
+  "description": "Polymarket sharp wallet tracker with Discord alerts",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
