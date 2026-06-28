@@ -2,16 +2,17 @@ const GAMMA = "https://gamma-api.polymarket.com";
 const CLOB  = "https://clob.polymarket.com";
 
 async function fetchSportsMarkets() {
-  const tags = ["sports","nba","mlb","nfl","nhl","soccer","mls","ufc","mma","tennis","golf","boxing"];
   const results = [];
-  for (const tag of tags) {
-    try {
-      const r = await fetch(`${GAMMA}/markets?active=true&closed=false&tag_slug=${tag}&limit=50`);
-      if (!r.ok) continue;
+  try {
+    const r = await fetch(
+      `${GAMMA}/markets?active=true&closed=false&limit=100`,
+      { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json" } }
+    );
+    if (r.ok) {
       const data = await r.json();
       if (Array.isArray(data)) results.push(...data);
-    } catch { continue; }
-  }
+    }
+  } catch {}
   const seen = new Set();
   return results.filter(m => {
     const id = m.conditionId || m.condition_id;
@@ -36,7 +37,7 @@ async function scoreWallet(address) {
     const positions = await r.json();
     if (!Array.isArray(positions)) return null;
     const settled = positions.filter(p => p.redeemed === true || p.outcome != null);
-    if (settled.length < 10) return null;
+    if (settled.length < 5) return null;
     const wins = settled.filter(p => p.winner === true || p.redeemed === true).length;
     const totalTrades = settled.length;
     const winRate = wins / totalTrades;
@@ -82,7 +83,7 @@ async function sendDiscordAlert(market, trade, wallet, lineMove) {
   const walletShort = wallet.address.slice(0,8) + "..." + wallet.address.slice(-4);
   const embed = {
     title: `🐋 ${wallet.grade} WALLET ALERT`,
-    description: `**${market.question || market.title || "Sports Market"}**`,
+    description: `**${market.question || market.title || "Market"}**`,
     color: wallet.winRate >= 0.80 ? 0x00C48C : 0xF5A623,
     fields: [
       { name: "📊 TRADE", value: [`**Side:** ${side}`,`**Size:** $${size.toLocaleString()}`,`**Implied prob:** ${(price*100).toFixed(1)}%`,`**Line move:** ${lineMove}`].join("\n"), inline: true },
